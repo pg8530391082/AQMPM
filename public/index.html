@@ -1,297 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AQMPM - Air Quality Monitor</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-            padding: 20px;
-        }
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-        
-        .aqi-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin: 20px 0;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-        .aqi-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .overall-aqi {
-            text-align: center;
-            font-size: 1.5em;
-            padding: 30px;
-        }
-        
-        .parameters-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin: 25px 0;
-        }
-        
-        .parameter {
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            background: #f8f9fa;
-            transition: all 0.3s ease;
-        }
-        .parameter:hover {
-            transform: scale(1.05);
-        }
-        
-        /* AQI Color Classes */
-        .good { 
-            background: linear-gradient(135deg, #d4edda, #c3e6cb); 
-            border-left: 5px solid #28a745; 
-        }
-        .moderate { 
-            background: linear-gradient(135deg, #fff3cd, #ffeaa7); 
-            border-left: 5px solid #ffc107; 
-        }
-        .unhealthy-sensitive { 
-            background: linear-gradient(135deg, #ffeaa7, #fdcb6e); 
-            border-left: 5px solid #f39c12; 
-        }
-        .unhealthy { 
-            background: linear-gradient(135deg, #f8d7da, #f5c6cb); 
-            border-left: 5px solid #dc3545; 
-        }
-        .very-unhealthy { 
-            background: linear-gradient(135deg, #e2e3e5, #d6d8db); 
-            border-left: 5px solid #6c757d; 
-        }
-        .hazardous { 
-            background: linear-gradient(135deg, #000, #495057); 
-            color: white; 
-            border-left: 5px solid #343a40; 
-        }
-        
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            color: white;
-            margin-bottom: 20px;
-        }
-        
-        .last-update {
-            text-align: center;
-            color: white;
-            font-size: 1em;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-        }
-        
-        @media (max-width: 768px) {
-            .parameters-grid {
-                grid-template-columns: 1fr;
-            }
-            .header h1 {
-                font-size: 2em;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AQMPM – Live Air Quality Monitoring</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f2f6ff;
+      color: #222;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #0078d7;
+    }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 70%;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px 15px;
+    }
+    th {
+      background: #0078d7;
+      color: white;
+    }
+    td {
+      font-weight: bold;
+    }
+    #status {
+      margin-top: 10px;
+      color: #0078d7;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🌫️ AQMPM</h1>
-            <p>Air Quality Monitoring Project Mega - Live Dashboard</p>
-        </div>
-        
-        <div class="status-bar">
-            <div id="connectionStatus">🔴 Connecting...</div>
-            <div id="serverStatus">🟡 Initializing...</div>
-        </div>
-        
-        <div id="overall" class="aqi-card overall-aqi">
-            <div style="font-size: 0.8em; margin-bottom: 15px; color: #666;">
-                OVERALL AIR QUALITY INDEX
-            </div>
-            <div style="font-size: 3em; font-weight: bold; margin: 20px 0;" id="aqiValue">
-                --
-            </div>
-            <div style="font-size: 1.2em;" id="aqiDescription">
-                Loading data...
-            </div>
-        </div>
-        
-        <div class="aqi-card">
-            <h3 style="text-align: center; margin-bottom: 20px; color: #555;">
-                📊 Pollutant Levels (AQI)
-            </h3>
-            <div class="parameters-grid" id="parameters">
-                <!-- Parameters will be populated by JavaScript -->
-            </div>
-        </div>
-        
-        <div class="aqi-card">
-            <h3 style="text-align: center; margin-bottom: 20px; color: #555;">
-                🌡️ Environmental Data
-            </h3>
-            <div class="parameters-grid">
-                <div id="temperatureCard" class="parameter">
-                    <div style="font-weight: bold; margin-bottom: 10px;">Temperature</div>
-                    <div style="font-size: 1.5em;">-- °C</div>
-                </div>
-                <div id="humidityCard" class="parameter">
-                    <div style="font-weight: bold; margin-bottom: 10px;">Humidity</div>
-                    <div style="font-size: 1.5em;">-- %</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="last-update" id="lastUpdate">
-            Last updated: Never | AQMPM v1.0
-        </div>
-    </div>
+  <h1>🌍 AQMPM – Live Air Quality Dashboard</h1>
+  <div id="status">Fetching latest data...</div>
 
-    <script>
-        // AQI classification functions
-        function getAQIClass(aqi) {
-            if (aqi <= 50) return 'good';
-            if (aqi <= 100) return 'moderate';
-            if (aqi <= 150) return 'unhealthy-sensitive';
-            if (aqi <= 200) return 'unhealthy';
-            if (aqi <= 300) return 'very-unhealthy';
-            return 'hazardous';
-        }
+  <table>
+    <tr><th>Parameter</th><th>Value</th></tr>
+    <tr><td>PM2.5</td><td id="pm25">0</td></tr>
+    <tr><td>PM10</td><td id="pm10">0</td></tr>
+    <tr><td>CO</td><td id="co">0</td></tr>
+    <tr><td>VOC</td><td id="voc">0</td></tr>
+    <tr><td>SO₂</td><td id="so2">0</td></tr>
+    <tr><td>NO₂</td><td id="no2">0</td></tr>
+    <tr><td>NH₃</td><td id="nh3">0</td></tr>
+    <tr><td>Temperature (°C)</td><td id="temperature">0</td></tr>
+    <tr><td>Humidity (%)</td><td id="humidity">0</td></tr>
+    <tr><td>Overall AQI</td><td id="overall">0</td></tr>
+  </table>
 
-        function getAQIDescription(aqi) {
-            if (aqi <= 50) return 'GOOD';
-            if (aqi <= 100) return 'MODERATE';
-            if (aqi <= 150) return 'UNHEALTHY FOR SENSITIVE GROUPS';
-            if (aqi <= 200) return 'UNHEALTHY';
-            if (aqi <= 300) return 'VERY UNHEALTHY';
-            return 'HAZARDOUS';
-        }
+  <script>
+    async function fetchAQIData() {
+      try {
+        const res = await fetch('/api/data');
+        const data = await res.json();
 
-        function getAQIColor(aqi) {
-            if (aqi <= 50) return '#00e400';
-            if (aqi <= 100) return '#ffff00';
-            if (aqi <= 150) return '#ff7e00';
-            if (aqi <= 200) return '#ff0000';
-            if (aqi <= 300) return '#8f3f97';
-            return '#7e0023';
-        }
+        document.getElementById('pm25').textContent = data.pm25;
+        document.getElementById('pm10').textContent = data.pm10;
+        document.getElementById('co').textContent = data.co;
+        document.getElementById('voc').textContent = data.voc;
+        document.getElementById('so2').textContent = data.so2;
+        document.getElementById('no2').textContent = data.no2;
+        document.getElementById('nh3').textContent = data.nh3;
+        document.getElementById('temperature').textContent = data.temperature;
+        document.getElementById('humidity').textContent = data.humidity;
+        document.getElementById('overall').textContent = data.overall;
+        document.getElementById('status').textContent = data.status + " (Updated: " + new Date(data.timestamp).toLocaleTimeString() + ")";
+      } catch (err) {
+        document.getElementById('status').textContent = "⚠️ Error fetching data";
+        console.error("Fetch error:", err);
+      }
+    }
 
-        // Fetch data from server
-        async function fetchData() {
-            try {
-                const response = await fetch('/api/data');
-                const data = await response.json();
-                updateDisplay(data);
-                document.getElementById('connectionStatus').innerHTML = '🟢 Connected to AQMPM';
-                document.getElementById('serverStatus').innerHTML = `📡 ${data.status}`;
-            } catch (error) {
-                console.error('Error fetching data:', error);
-                document.getElementById('connectionStatus').innerHTML = '🔴 Connection Error';
-                document.getElementById('serverStatus').innerHTML = '❌ Server offline';
-            }
-        }
-
-        // Update the display with new data
-        function updateDisplay(data) {
-            // Update overall AQI
-            const aqiValue = data.overall || 0;
-            const aqiClass = getAQIClass(aqiValue);
-            const aqiColor = getAQIColor(aqiValue);
-            
-            document.getElementById('aqiValue').textContent = aqiValue;
-            document.getElementById('aqiValue').style.color = aqiColor;
-            document.getElementById('aqiDescription').textContent = getAQIDescription(aqiValue);
-            document.getElementById('aqiDescription').style.color = aqiColor;
-            document.getElementById('overall').className = `aqi-card overall-aqi ${aqiClass}`;
-
-            // Update parameters grid
-            const parameters = [
-                { name: 'PM2.5', value: data.pm25, unit: 'μg/m³' },
-                { name: 'PM10', value: data.pm10, unit: 'μg/m³' },
-                { name: 'Carbon Monoxide', value: data.co, unit: 'AQI' },
-                { name: 'Alcohol', value: data.alcohol, unit: 'AQI' },
-                { name: 'VOC', value: data.voc, unit: 'AQI' },
-                { name: 'Sulfur Dioxide', value: data.so2, unit: 'AQI' },
-                { name: 'Nitrogen Dioxide', value: data.no2, unit: 'AQI' },
-                { name: 'Ammonia', value: data.nh3, unit: 'AQI' },
-                { name: 'Carbon Dioxide', value: data.co2, unit: 'AQI' }
-            ];
-
-            const paramsElement = document.getElementById('parameters');
-            paramsElement.innerHTML = parameters.map(param => {
-                const value = param.value || 0;
-                const paramClass = getAQIClass(value);
-                return `
-                    <div class="parameter ${paramClass}">
-                        <div style="font-weight: bold; margin-bottom: 8px; font-size: 1.1em;">${param.name}</div>
-                        <div style="font-size: 1.8em; font-weight: bold; margin: 10px 0;">${value}</div>
-                        <div style="font-size: 0.9em; color: #666;">${param.unit}</div>
-                    </div>
-                `;
-            }).join('');
-
-            // Update temperature and humidity
-            document.getElementById('temperatureCard').innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 10px;">Temperature</div>
-                <div style="font-size: 1.8em; font-weight: bold;">${data.temperature || '--'} °C</div>
-            `;
-            document.getElementById('humidityCard').innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 10px;">Humidity</div>
-                <div style="font-size: 1.8em; font-weight: bold;">${data.humidity || '--'} %</div>
-            `;
-
-            // Update timestamp
-            const lastUpdate = new Date(data.timestamp).toLocaleString();
-            document.getElementById('lastUpdate').innerHTML = 
-                `Last updated: ${lastUpdate} | AQMPM v1.0 | Overall AQI: ${aqiValue}`;
-        }
-
-        // Fetch data every 5 seconds
-        setInterval(fetchData, 5000);
-        fetchData(); // Initial load
-
-        // Show connection status
-        window.addEventListener('online', () => {
-            document.getElementById('connectionStatus').innerHTML = '🟢 Connected to AQMPM';
-        });
-
-        window.addEventListener('offline', () => {
-            document.getElementById('connectionStatus').innerHTML = '🔴 No Internet Connection';
-        });
-    </script>
+    // Refresh every 5 seconds
+    fetchAQIData();
+    setInterval(fetchAQIData, 5000);
+  </script>
 </body>
 </html>
